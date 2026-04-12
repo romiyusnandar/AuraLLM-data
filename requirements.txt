@@ -1,0 +1,7 @@
+# Dependencies for aksara-data translation pipeline
+datasets>=2.14.0
+deep-translator>=1.11.4
+huggingface-hub>=0.19.0
+transformers>=4.30.0
+sacremoses>=0.0.53
+torch>=2.0.0
