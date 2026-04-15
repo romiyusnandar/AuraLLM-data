@@ -1,6 +1,6 @@
 """
-AksaraLLM — Translasi Dataset Paralel dengan Range Baris
-=========================================================
+AuraLLM — Translasi Dataset Paralel dengan Range Baris
+======================================================
 Script ini untuk menerjemahkan hh-rlhf secara PARALEL
 menggunakan beberapa akun Colab sekaligus.
 
@@ -45,7 +45,7 @@ def translate_safe(text: str, model, tokenizer, device) -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="AksaraLLM — Translasi Range Baris Tertentu (untuk paralel multi-akun)"
+        description="AuraLLM — Translasi Range Baris Tertentu (untuk paralel multi-akun)"
     )
     parser.add_argument("--start", type=int, required=True,
                         help="Baris pertama yang akan diterjemahkan (index dataset)")
@@ -54,7 +54,7 @@ def main():
     parser.add_argument("--output", type=str, required=True,
                         help="Nama file output JSONL (contoh: shard_50k_65k.jsonl)")
     parser.add_argument("--drive", action="store_true",
-                        help="Simpan ke Google Drive (/content/drive/MyDrive/aksaraLLM-data/)")
+                        help="Simpan ke Google Drive (/content/drive/MyDrive/AuraLLM-data/)")
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--save-every", type=int, default=200,
                         help="Flush/save ke disk setiap N baris (default: 200)")
@@ -62,14 +62,14 @@ def main():
 
     # Setup output path
     if args.drive:
-        out_dir = "/content/drive/MyDrive/aksaraLLM-data"
+        out_dir = "/content/drive/MyDrive/AuraLLM-data"
         os.makedirs(out_dir, exist_ok=True)
         out_path = os.path.join(out_dir, args.output)
     else:
         out_path = args.output
 
     print("=" * 55)
-    print(f"🚀 AksaraLLM Translasi Paralel")
+    print(f"🚀 AuraLLM Translasi Paralel")
     print(f"   Range  : baris {args.start} → {args.end}")
     print(f"   Output : {out_path}")
     print("=" * 55)

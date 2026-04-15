@@ -1,6 +1,6 @@
 """
-AksaraLLM — Translasi ULTRA-CEPAT dengan Batch GPU
-====================================================
+AuraLLM — Translasi ULTRA-CEPAT dengan Batch GPU
+================================================
 Menggunakan batch inference GPU untuk kecepatan maksimal.
 Target: ~15-30 rows/s (vs 0.6 rows/s sebelumnya = 25-50x lebih cepat!)
 
@@ -58,7 +58,7 @@ def prepare_texts(batch_rows):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="AksaraLLM — Translasi ULTRA-CEPAT hh-rlhf dengan Batch GPU"
+        description="AuraLLM — Translasi ULTRA-CEPAT hh-rlhf dengan Batch GPU"
     )
     parser.add_argument("--start", type=int, required=True,
                         help="Baris pertama dataset yang akan diterjemahkan")
@@ -67,7 +67,7 @@ def main():
     parser.add_argument("--output", type=str, required=True,
                         help="Nama file output JSONL")
     parser.add_argument("--drive", action="store_true",
-                        help="Simpan ke /content/drive/MyDrive/aksaraLLM-data/")
+                        help="Simpan ke /content/drive/MyDrive/AuraLLM-data/")
     parser.add_argument("--batch-size", type=int, default=64,
                         help="Jumlah teks yang diproses GPU sekaligus (default: 64)")
     parser.add_argument("--save-every", type=int, default=500,
@@ -76,14 +76,14 @@ def main():
 
     # ── Output path ──────────────────────────────────────────────────────
     if args.drive:
-        out_dir = "/content/drive/MyDrive/aksaraLLM-data"
+        out_dir = "/content/drive/MyDrive/AuraLLM-data"
         os.makedirs(out_dir, exist_ok=True)
         out_path = os.path.join(out_dir, args.output)
     else:
         out_path = args.output
 
     print("=" * 58)
-    print(f"🚀 AksaraLLM Ultra-Fast Translator")
+    print(f"🚀 AuraLLM Ultra-Fast Translator")
     print(f"   Range  : {args.start:,} → {args.end:,}")
     print(f"   Output : {out_path}")
     print("=" * 58)

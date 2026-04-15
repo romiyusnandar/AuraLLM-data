@@ -1,0 +1,27 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# local env / secrets
+.env
+.env.*
+*.token
+
+# generated datasets
+*.jsonl
+*.json
+
+# Hugging Face / model caches
+.cache/
+cache/
+
+# notebooks and checkpoints
+.ipynb_checkpoints/
+
+# editor / OS files
+.DS_Store
+Thumbs.db

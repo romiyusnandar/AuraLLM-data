@@ -31,13 +31,12 @@ def translate_safe(text: str, model, tokenizer, device) -> str:
         return ""
 
 def push_to_github(file_path: str, shard: int, start_idx: int, end_idx: int, token: str):
-    """Fungsi ajaib untuk nyimpen kerjaan dari Colab langsung ke Github aksara-data."""
+    """Push hasil sementara ke remote origin yang sudah dikonfigurasi."""
     print("\n🚀 Menyimpan otomatis ke GitHub (Auto-Save)...")
-    
-    # Setup kredensial Github sekali tembak
-    os.system(f'git remote set-url origin https://{token}@github.com/aksaraLLM/aksara-data.git')
-    os.system('git config --global user.email "bot-aksara@example.com"')
-    os.system('git config --global user.name "Aksara-Bot-Penerjemah"')
+
+    # Pakai remote origin yang sudah ada agar script tidak salah mendorong ke repo lama.
+    os.system('git config --global user.email "bot-aurallm@github.com"')
+    os.system('git config --global user.name "AuraLLM Translator Bot"')
     
     # Eksekusi Git Commit & Push
     os.system(f'git add {file_path}')
@@ -50,14 +49,14 @@ def push_to_github(file_path: str, shard: int, start_idx: int, end_idx: int, tok
         print("❌ Gagal Push ke Github (Mungkin token salah atau koneksi jelek).\n")
 
 def main():
-    parser = argparse.ArgumentParser(description="AksaraLLM - Penerjemah Dataset Massal Terdistribusi")
+    parser = argparse.ArgumentParser(description="AuraLLM - Penerjemah Dataset Massal Terdistribusi")
     parser.add_argument("--shard", type=int, required=True, help="Akun Colab ke-berapa ini? (Contoh: 1, 2, atau 3)")
     parser.add_argument("--total-shards", type=int, required=True, help="Total barisan pekerja Colab (Misal: 3)")
-    parser.add_argument("--github-token", type=str, default="", help="Personal Access Token Github milikmu buat Auto-Save")
+    parser.add_argument("--github-token", type=str, default="", help="Personal Access Token GitHub milikmu buat Auto-Save")
     parser.add_argument("--save-every", type=int, default=1000, help="Simpan ke github tiap berapa baris?")
     args = parser.parse_args()
 
-    print(f"🤖 Menyalakan Mesin Penerjemah AksaraLLM (Pekerja ke-{args.shard} dari {args.total_shards})")
+    print(f"🤖 Menyalakan Mesin Penerjemah AuraLLM (Pekerja ke-{args.shard} dari {args.total_shards})")
     print("-" * 50)
     
     # 1. Download Dataset Asli (Anthropic punya 160k baris)

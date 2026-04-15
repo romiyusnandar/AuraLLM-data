@@ -1,5 +1,5 @@
 """
-aksaraLLM — Mesin Penerjemah Massal v2 (Turbo Batch Edition)
+AuraLLM — Mesin Penerjemah Massal v2 (Turbo Batch Edition)
 
 Fitur:
   - Batch translation (10x lebih cepat dari v1!)
@@ -62,7 +62,7 @@ def translate_batch(texts: list[str], model, tokenizer, device, max_len=512) -> 
 
 
 def main():
-    parser = argparse.ArgumentParser(description="AksaraLLM Penerjemah Massal v2")
+    parser = argparse.ArgumentParser(description="AuraLLM Penerjemah Massal v2")
     parser.add_argument("--shard", type=int, required=True, help="Nomor shard (1 atau 2)")
     parser.add_argument("--total-shards", type=int, default=2, help="Total shard")
     parser.add_argument("--batch-size", type=int, default=8, help="Jumlah teks per batch")
@@ -72,14 +72,14 @@ def main():
 
     # Setup output path
     if args.drive:
-        out_dir = "/content/drive/MyDrive/aksaraLLM-data"
+        out_dir = "/content/drive/MyDrive/AuraLLM-data"
     else:
         out_dir = "."
     os.makedirs(out_dir, exist_ok=True)
     out_file = os.path.join(out_dir, f"translated_hh_rlhf_shard_{args.shard}.jsonl")
 
     print("=" * 60)
-    print(f"🤖 Mesin Penerjemah AksaraLLM v2 (Shard {args.shard}/{args.total_shards})")
+    print(f"🤖 Mesin Penerjemah AuraLLM v2 (Shard {args.shard}/{args.total_shards})")
     print(f"   Batch size: {args.batch_size} | Save tiap: {args.save_every}")
     print(f"   Output: {out_file}")
     print("=" * 60)

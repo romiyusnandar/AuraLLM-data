@@ -1,158 +1,81 @@
-# 📊 aksara-data
+# AuraLLM Data Tools
 
-**Data curation pipeline for aksaraLLM — 100% transparent, 100% reproducible.**
+Translation utilities for preparing Indonesian training data for AuraLLM.
 
-<p align="center">
-  <a href="https://github.com/aksaraLLM/aksara-data/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
-  <a href="https://discord.gg/aksarallm"><img src="https://img.shields.io/badge/Discord-Join-7289da?logo=discord" alt="Discord"></a>
-</p>
+## What This Repo Actually Contains
 
----
+This repository currently contains a small set of Python scripts for:
 
-## Overview
+- downloading a Hugging Face dataset
+- translating English text to Indonesian with `Helsinki-NLP/opus-mt-en-id`
+- splitting work by shard or row range
+- saving translated output as JSONL
+- resuming interrupted runs
 
-This repository contains the complete data pipeline for aksaraLLM pre-training and fine-tuning datasets. Everything is open and documented — from raw source URLs to the final tokenized data.
+The current scripts are focused on the `Anthropic/hh-rlhf` dataset and its
+`chosen` / `rejected` fields.
 
-### What's Included
-- 📥 **Download scripts** for all data sources
-- 🔍 **Quality filtering** (perplexity, heuristic, classifier-based)
-- 🧹 **Deduplication** (MinHash, exact dedup)
-- 🔒 **PII removal** pipeline
-- 🌐 **Language detection** & filtering
-- 📊 **Data analysis** & statistics tools
-- 🧪 **Data mixing** configuration
+## Included Scripts
 
-## Data Sources
+- `translate_fast.py`
+  Best starting point for fast batch translation by row range.
+- `translate_range.py`
+  Simpler range-based translation flow.
+- `translate_v2.py`
+  Shard-based batch translation flow.
+- `translate_pipeline.py`
+  Older distributed script kept for reference. Review before using in public or
+  shared environments.
 
-### Pre-Training Data
+## Install
 
-| Source | Languages | Tokens (Est.) | License | Status |
-|--------|-----------|---------------|---------|--------|
-| Common Crawl (filtered) | Multilingual | ~500B | CC-BY-SA | 📋 Planned |
-| Wikipedia | ID, EN, +15 langs | ~20B | CC-BY-SA | 📋 Planned |
-| CulturaX | Multilingual | ~200B (sampled) | Various | 📋 Planned |
-| RedPajama-V2 | EN-heavy | ~300B (sampled) | Apache 2.0 | 📋 Planned |
-| arXiv | EN | ~50B | Various | 📋 Planned |
-| GitHub (permissive) | Code | ~100B | Permissive | 📋 Planned |
-| Stack Exchange | EN | ~15B | CC-BY-SA | 📋 Planned |
-| Indonesian Web Crawl | ID | ~50B | Custom | 📋 Planned |
-| Books (public domain) | Multi | ~20B | Public Domain | 📋 Planned |
-
-### Fine-Tuning Data
-
-| Dataset | Type | Size | Language |
-|---------|------|------|----------|
-| OpenHermes 2.5 | Instruction | ~1M examples | EN |
-| SlimOrca | Instruction | ~500K examples | EN |
-| Indonesian Instructions | Instruction | TBD | ID |
-| Code Instructions | Code SFT | TBD | Code |
-| UltraFeedback | Preference | ~64K examples | EN |
-
-## Pipeline Architecture
-
+```bash
+python -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     DATA PIPELINE                           │
-│                                                             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │ Download  │→ │ Language  │→ │ Quality  │→ │  Dedup   │   │
-│  │ & Extract │  │ Detect   │  │ Filter   │  │ (MinHash)│   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-│                                       ↓                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                  │
-│  │ Tokenize │← │   Mix    │← │   PII    │                  │
-│  │ & Pack   │  │ & Sample │  │ Removal  │                  │
-│  └──────────┘  └──────────┘  └──────────┘                  │
-│       ↓                                                     │
-│  ┌──────────┐                                               │
-│  │  Final   │ → Ready for training                          │
-│  │ Dataset  │                                               │
-│  └──────────┘                                               │
-└─────────────────────────────────────────────────────────────┘
+
+On Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
 ## Quick Start
 
+Translate rows `0..999` from `Anthropic/hh-rlhf` into `hasil_0_1000.jsonl`:
+
 ```bash
-# Clone the repository
-git clone https://github.com/aksaraLLM/aksara-data.git
-cd aksara-data
-
-# Install dependencies
-pip install -e ".[dev]"
-
-# Download a specific data source
-python -m aksara_data.download --source wikipedia --languages id,en
-
-# Run quality filtering
-python -m aksara_data.filter --input data/raw/ --output data/filtered/
-
-# Run deduplication
-python -m aksara_data.dedup --input data/filtered/ --output data/deduped/
-
-# Generate dataset statistics
-python -m aksara_data.stats --input data/deduped/
+python translate_fast.py --start 0 --end 1000 --output hasil_0_1000.jsonl
 ```
 
-## Project Structure
+Example output format:
 
-```
-aksara-data/
-├── aksara_data/
-│   ├── __init__.py
-│   ├── download/              # Data source downloaders
-│   │   ├── common_crawl.py
-│   │   ├── wikipedia.py
-│   │   ├── culturax.py
-│   │   └── ...
-│   ├── filter/                # Quality filtering
-│   │   ├── perplexity.py
-│   │   ├── heuristic.py
-│   │   ├── classifier.py
-│   │   └── language_detect.py
-│   ├── dedup/                 # Deduplication
-│   │   ├── minhash.py
-│   │   ├── exact_dedup.py
-│   │   └── url_dedup.py
-│   ├── privacy/               # PII removal
-│   │   ├── pii_detector.py
-│   │   └── anonymizer.py
-│   ├── mix/                   # Data mixing
-│   │   ├── sampler.py
-│   │   └── mixer.py
-│   ├── stats/                 # Data analysis
-│   │   └── analyzer.py
-│   └── utils/
-│       └── ...
-├── configs/
-│   ├── sources.yaml           # Data source definitions
-│   ├── filter_config.yaml     # Filtering parameters
-│   └── mix_config.yaml        # Data mixing ratios
-├── tests/
-├── LICENSE
-├── README.md
-└── pyproject.toml
+```json
+{"chosen":"...", "rejected":"...", "original_idx":123}
 ```
 
-## Data Card
+## Notes Before Publishing
 
-Every dataset we produce comes with a detailed data card documenting:
-- **Source**: Where the data came from
-- **Processing**: Every transformation applied
-- **Statistics**: Token counts, language distribution, quality scores
-- **Known Issues**: Any limitations or biases
-- **License**: Data licensing information
+- This repo contains code only. Check the license of any source dataset before
+  publishing generated data.
+- Do not commit generated `.jsonl` files, secrets, or local caches.
+- Some scripts include Google Colab / Google Drive-oriented paths.
+- The scripts are still opinionated toward one dataset and are not yet fully
+  generic.
 
-## Contributing
+## Suggested Next Step
 
-We especially need help with:
-- 🌍 **Non-English data sources** — especially Southeast Asian languages
-- 🔍 **Quality filtering improvements**
-- 📊 **Data analysis & visualization**
-- 🔒 **PII detection** for non-English text
+If you want to adopt this repo for your own datasets, the best path is to make
+`translate_fast.py` configurable for:
 
-See [CONTRIBUTING.md](https://github.com/aksaraLLM/community/blob/main/CONTRIBUTING.md) for guidelines.
+- dataset name
+- split name
+- input text columns
+- output file schema
 
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE).
+Apache License 2.0. See [LICENSE](LICENSE).
