@@ -18,14 +18,13 @@ The current scripts are focused on the `Anthropic/hh-rlhf` dataset and its
 ## Included Scripts
 
 - `translate_fast.py`
-  Best starting point for fast batch translation by row range.
-- `translate_range.py`
-  Simpler range-based translation flow.
-- `translate_v2.py`
-  Shard-based batch translation flow.
-- `translate_pipeline.py`
-  Older distributed script kept for reference. Review before using in public or
-  shared environments.
+  Main translation script for batch translation by row range.
+- `merge_filter_jsonl.py`
+  Merge translated shards and drop clearly bad records.
+- `normalize_jsonl_labels.py`
+  Normalize `Human:` / `Assistant:` labels into Indonesian role labels.
+- `audit_jsonl_quality.py`
+  Audit output quality before you use the dataset for training.
 
 ## Install
 
@@ -57,24 +56,47 @@ Example output format:
 {"chosen":"...", "rejected":"...", "original_idx":123}
 ```
 
-## Notes Before Publishing
+## Recommended Workflow
 
-- This repo contains code only. Check the license of any source dataset before
-  publishing generated data.
-- Do not commit generated `.jsonl` files, secrets, or local caches.
-- Some scripts include Google Colab / Google Drive-oriented paths.
-- The scripts are still opinionated toward one dataset and are not yet fully
-  generic.
+1. Translate data in chunks.
+2. Merge all chunk files into one file.
+3. Filter obviously bad records such as empty rows or equal pairs.
+4. Normalize speaker labels.
+5. Audit the final file before training.
 
-## Suggested Next Step
+Example:
 
-If you want to adopt this repo for your own datasets, the best path is to make
-`translate_fast.py` configurable for:
+```bash
+python translate_fast.py --start 0 --end 10000 --output part_00000_10000.jsonl
+python translate_fast.py --start 10000 --end 20000 --output part_10000_20000.jsonl
+python merge_filter_jsonl.py --input "part_*.jsonl" --output final_merged.jsonl --drop-equal --drop-empty --dedup-by-idx
+python normalize_jsonl_labels.py --input final_merged.jsonl --output final_normalized.jsonl
+python audit_jsonl_quality.py --input final_normalized.jsonl
+```
 
-- dataset name
-- split name
-- input text columns
-- output file schema
+## Colab Notes
+
+Typical Google Colab flow:
+
+```python
+from google.colab import drive
+drive.mount('/content/drive')
+```
+
+```bash
+!git clone https://github.com/romiyusnandar/AuraLLM-data.git
+%cd AuraLLM-data
+!pip install -r requirements.txt
+!python translate_fast.py --start 0 --end 1000 --output part_000_100.jsonl --drive
+```
+
+If needed, you can then merge and clean output files stored in Google Drive:
+
+```bash
+!python merge_filter_jsonl.py --input "/content/drive/MyDrive/AuraLLM-data/part_*.jsonl" --output "/content/drive/MyDrive/AuraLLM-data/final_merged.jsonl" --drop-equal --drop-empty --dedup-by-idx
+!python normalize_jsonl_labels.py --input "/content/drive/MyDrive/AuraLLM-data/final_merged.jsonl" --output "/content/drive/MyDrive/AuraLLM-data/final_normalized.jsonl"
+!python audit_jsonl_quality.py --input "/content/drive/MyDrive/AuraLLM-data/final_normalized.jsonl"
+```
 
 ## License
 
