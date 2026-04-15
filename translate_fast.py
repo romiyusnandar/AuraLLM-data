@@ -16,32 +16,46 @@ import os
 import time
 import torch
 from datasets import load_dataset
-from transformers import pipeline
+from transformers import MarianMTModel, MarianTokenizer
 
 MAX_CHARS = 350   # Potong panjang → token lebih pendek → batching lebih cepat
 
 
 def load_translator():
-    """Load Helsinki-NLP dengan GPU + FP16 + batch pipeline."""
-    device = 0 if torch.cuda.is_available() else -1
-    dtype  = torch.float16 if torch.cuda.is_available() else torch.float32
+    """Load model translation secara langsung tanpa pipeline agar lebih stabil di Colab."""
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
-    print(f"🔥 GPU {'aktif' if device == 0 else 'tidak tersedia, pakai CPU'}")
+    print(f"🔥 GPU {'aktif' if device.type == 'cuda' else 'tidak tersedia, pakai CPU'}")
     if torch.cuda.is_available():
         print(f"   {torch.cuda.get_device_name(0)} | VRAM: {torch.cuda.get_device_properties(0).total_memory/1e9:.1f} GB")
 
     print("🧠 Memuat Helsinki-NLP/opus-mt-en-id...")
-    translator = pipeline(
-        task="translation_en_to_id",
-        model="Helsinki-NLP/opus-mt-en-id",
-        device=device,
+    model_name = "Helsinki-NLP/opus-mt-en-id"
+    tokenizer = MarianTokenizer.from_pretrained(model_name)
+    model = MarianMTModel.from_pretrained(
+        model_name,
         torch_dtype=dtype,
-        batch_size=64,           # <- Kunci kecepatan! Proses 64 teks sekaligus
-        truncation=True,
-        max_length=350,
-    )
+    ).to(device)
+    model.eval()
     print("✅ Model siap!")
-    return translator
+    return tokenizer, model, device
+
+
+def translate_batch(texts, tokenizer, model, device, max_length=350):
+    """Terjemahkan sekumpulan teks sekaligus."""
+    inputs = tokenizer(
+        texts,
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=max_length,
+    ).to(device)
+
+    with torch.no_grad():
+        outputs = model.generate(**inputs, max_length=max_length)
+
+    return tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
 
 def prepare_texts(batch_rows):
@@ -111,7 +125,7 @@ def main():
     print(f"   Sisa: {remaining:,} baris\n")
 
     # ── Load model ────────────────────────────────────────────────────────
-    translator = load_translator()
+    tokenizer, model, device = load_translator()
 
     # ── Translasi BATCH ───────────────────────────────────────────────────
     print(f"\n{'='*58}")
@@ -135,21 +149,21 @@ def main():
 
             # Terjemahkan SEKALIGUS (batch GPU!)
             try:
-                chosen_results   = translator(chosen_texts,   max_length=350)
-                rejected_results = translator(rejected_texts, max_length=350)
+                chosen_results = translate_batch(chosen_texts, tokenizer, model, device, max_length=350)
+                rejected_results = translate_batch(rejected_texts, tokenizer, model, device, max_length=350)
             except Exception as e:
                 print(f"  ⚠️ Batch error (skip): {e}")
                 # Fallback: translate satu-satu
-                chosen_results   = [{"translation_text": ""} for _ in chosen_texts]
-                rejected_results = [{"translation_text": ""} for _ in rejected_texts]
+                chosen_results = ["" for _ in chosen_texts]
+                rejected_results = ["" for _ in rejected_texts]
 
             # Tulis hasil
             for i, (row, ch_res, rj_res) in enumerate(
                 zip(batch_rows, chosen_results, rejected_results)
             ):
                 json_line = json.dumps({
-                    "chosen":       ch_res.get("translation_text", ""),
-                    "rejected":     rj_res.get("translation_text", ""),
+                    "chosen":       ch_res,
+                    "rejected":     rj_res,
                     "original_idx": args.start + idx + i,
                 }, ensure_ascii=False)
                 f_out.write(json_line + "\n")
